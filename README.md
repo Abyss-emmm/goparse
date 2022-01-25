@@ -1,0 +1,2 @@
+# goparse
+parse golang bin

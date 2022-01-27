@@ -1,6 +1,7 @@
 #encoding:utf-8
 import ida_bytes
 import idaapi
+from typelink import RType
 idaapi.require('pcHeader')
 idaapi.require('common')
 idaapi.require('typelink')
@@ -137,6 +138,15 @@ class ModuleData():
             ida_bytes.set_cmt(start_addr+ptrSize*65,'bad',False)
             self.next = common.get_qword(start_addr+ptrSize*66)
             ida_bytes.set_cmt(start_addr+ptrSize*66,'next',False)
+
+    def parsed_typelink(self):
+        self.rtypes = {}
+        for addr in self.typelinks.parsed_types.keys():
+            rtype = self.typelinks.parsed_types[addr]
+            kind = rtype.get_kind()
+            if kind not in self.rtypes.keys():
+                self.rtypes[kind] = {}
+            self.rtypes[kind][rtype.name_str] = rtype
         
 
 

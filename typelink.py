@@ -323,6 +323,14 @@ class StructType(RType):
         if self.uncommon:
             self.parse_uncommon()
 
+    def show_struct(self):
+        struct_info = "type %s struct{" % self.name_str
+        for field in self.fields:
+            field_info = "\n\t%s %s offset %d" % (field.field_name.get_name(),field.type.name_str,field.offset)
+            struct_info += field_info
+        struct_info += "\n}"
+        print(struct_info)
+
 class Struct_Field():
     '''
     go 1.16.8
@@ -342,7 +350,7 @@ class Struct_Field():
         self.field_name = Name(field_name_addr,self)
         if not struct_type.typelink.has_parsed(field_type_addr):
             struct_type.typelink.parse_type(field_type_addr)
-            self.type = struct_type.typelink.parsed_types[field_type_addr]
+        self.type = struct_type.typelink.parsed_types[field_type_addr]
         self.offset = self.offsetEmbed >> 1
         self.is_embeded = (self.offsetEmbed&1 != 0)
         for i in range(0,3):

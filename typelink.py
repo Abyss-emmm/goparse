@@ -1,8 +1,10 @@
 #encoding:utf-8
+
 import idaapi
 import ida_bytes
 import ida_name
 import ida_offset
+import ida_struct
 import traceback
 idaapi.require('common')
 idaapi.require('moduledata')
@@ -326,10 +328,39 @@ class StructType(RType):
     def show_struct(self):
         struct_info = "type %s struct{" % self.name_str
         for field in self.fields:
-            field_info = "\n\t%s %s offset %d" % (field.field_name.get_name(),field.type.name_str,field.offset)
+            field_info = "\n\t%s %s offset 0x%x" % (field.field_name.get_name(),field.type.name_str,field.offset)
             struct_info += field_info
         struct_info += "\n}"
         print(struct_info)
+    
+    def generate_struct(self):
+        field_infos = []
+        for field in self.fields:
+            name = field.field_name.get_name()
+            name = name.replace('#','').replace('.','_').replace('*',"_ptr_")
+            offset = field.offset
+            nbytes = field.type.size
+            if field.type.name_str == '#string':
+                field_info_addr = {"name":name+"_addr","offset":offset,"nbytes":8}
+                field_info_len = {"name":name+"_len","offset":offset+8,"nbytes":8}
+                field_infos.append(field_info_addr)
+                field_infos.append(field_info_len)
+            else:
+                field_info = {"name":name,"offset":offset,"nbytes":nbytes}
+                field_infos.append(field_info)
+        fields_num = len(field_infos)
+        struct_name = self.name_str.replace('#','').replace('.','_').replace('*',"_ptr_")
+        idx = ida_struct.add_struc(idaapi.BADADDR,struct_name,False)
+        struc = ida_struct.get_struc(idx)
+        for i in range(fields_num):
+            if i < fields_num-1:
+                if field_infos[i]['nbytes'] != field_infos[i+1]['offset']-field_infos[i]['offset']:
+                    print("%s type size(0x%x) is not equal its size(0x%x) in struct,offset is 0x%x" % (field_infos[i]['name'],field_infos[i]['nbytes'],field_infos[i+1]['offset']-field_infos[i]['offset'],field_infos[i]['offset']))
+                    field_infos[i]['nbytes'] = field_infos[i+1]['offset']-field_infos[i]['offset']
+            ida_struct.add_struc_member(struc,field_infos[i]['name'],field_infos[i]['offset'],ida_bytes.FF_DATA,None,field_infos[i]['nbytes'])
+        
+
+
 
 class Struct_Field():
     '''

@@ -96,9 +96,8 @@ type pcHeader struct {
     def is_valid(pcheader_addr,moduledata_addr):
         pcheader = pcHeader(pcheader_addr,moduledata_addr,False)
         firstmoduledata = moduledata.ModuleData(moduledata_addr,False)
-        if firstmoduledata.funcname.addr == pcheader.funcname_addr and \
+        if firstmoduledata.funcnametab.addr == pcheader.funcname_addr and \
             firstmoduledata.cutab.addr == pcheader.cutab and \
-            firstmoduledata.funcname.addr == pcheader.funcname_addr and \
             firstmoduledata.filetab.addr == pcheader.filetab and \
             firstmoduledata.pctab.addr == pcheader.pctab and \
             firstmoduledata.pclntable.addr == pcheader.pclntab_addr:

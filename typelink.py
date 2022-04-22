@@ -87,7 +87,7 @@ class TypeLinks():
 
 class RType():
     '''
-    go1.16.8
+    go1.18.1
     A single RType struct
     Refer: src/reflect/type.go
     type rtype struct {
@@ -206,50 +206,51 @@ class RType():
 
 class Name():
     '''
-    A rtype name struct
-    Refer: https://golang.org/src/reflect/type.go
+go 1.18.1
 
-    name is an encoded type name with optional extra data.
-    
-    The first byte is a bit field containing:
-    
-        1<<0 the name is exported
-        1<<1 tag data follows the name
-        1<<2 pkgPath nameOff follows the name and tag
-    
-    The next two bytes are the data length:
-    
-         l := uint16(data[1])<<8 | uint16(data[2])
-    
-    Bytes [3:3+l] are the string data.
-    
-    If tag data follows then bytes 3+l and 3+l+1 are the tag length,
-    with the data following.
-    
-    If the import path follows, then 4 bytes at the end of
-    the data form a nameOff. The import path is only set for concrete
-    methods that are defined in a different package than their type.
-    
-    If a name starts with "*", then the exported bit represents
-    whether the pointed to type is exported.
-    
-    type name struct {
-        bytes *byte
-    }
+// name is an encoded type name with optional extra data.
+//
+// The first byte is a bit field containing:
+//
+//	1<<0 the name is exported
+//	1<<1 tag data follows the name
+//	1<<2 pkgPath nameOff follows the name and tag
+//
+// Following that, there is a varint-encoded length of the name,
+// followed by the name itself.
+//
+// If tag data is present, it also has a varint-encoded length
+// followed by the tag itself.
+//
+// If the import path follows, then 4 bytes at the end of
+// the data form a nameOff. The import path is only set for concrete
+// methods that are defined in a different package than their type.
+//
+// If a name starts with "*", then the exported bit represents
+// whether the pointed to type is exported.
+//
+// Note: this encoding must match here and in:
+//   cmd/compile/internal/reflectdata/reflect.go
+//   runtime/type.go
+//   internal/reflectlite/type.go
+//   cmd/link/internal/ld/decodesym.go
+
+type name struct {
+	bytes *byte
+}
     '''
     def __init__(self,name_addr,rtype:RType):
         self.start_addr = name_addr
         self.rtype = rtype
         self.flag = ida_bytes.get_byte(name_addr)
-        self.len = (ida_bytes.get_byte(name_addr+1)<<8)|ida_bytes.get_byte(name_addr+2)
-        self.name = ida_bytes.get_bytes(name_addr+3,self.len)
+        self.len,off = common.read_varint(name_addr+1)
+        self.name = ida_bytes.get_bytes(name_addr+1+off,self.len)
         self.is_exported = False
         self.has_tag = False
         self.has_pkgpath = False
         self.parse_flag()
         ida_bytes.create_byte(name_addr,1,False)
         ida_bytes.set_cmt(name_addr,self.flag_comm,False)
-        ida_bytes.create_word(name_addr+1,2,False)
         ida_bytes.set_cmt(name_addr+1,"len:0x%x" % self.len,False)
 
     def parse_flag(self):
@@ -280,7 +281,7 @@ class Name():
 
 class PtrType(RType):
     '''
-    go 1.16.8
+    go 1.18.1
     Refer: https://golang.org/src/reflect/type.go
     type ptrType struct {
     	rtype
@@ -299,7 +300,7 @@ class PtrType(RType):
 
 class StructType(RType):
     '''
-    go 1.16.8
+    go 1.18.1
     Refer: https://golang.org/src/reflect/type.go
     type structType struct {
     	rtype
@@ -364,7 +365,7 @@ class StructType(RType):
 
 class Struct_Field():
     '''
-    go 1.16.8
+    go 1.18.1
     Refer: https://golang.org/src/reflect/type.go
     type structField struct {
     	name        name    // name is always non-empty
@@ -394,7 +395,7 @@ class Struct_Field():
 
 class SliceType(RType):
     '''
-    go 1.16.8
+    go 1.18.1
     Slice type
     Refer: https://golang.org/src/reflect/type.go
 
@@ -413,7 +414,7 @@ class SliceType(RType):
 
 class ArrayType(RType):
     '''
-    go 1.16.8
+    go 1.18.1
     Array type  
     Refer: https://golang.org/src/reflect/type.go
 
@@ -438,7 +439,7 @@ class ArrayType(RType):
 
 class FuncType(RType):
     '''
-    go 1.16.8
+    go 1.18.1
     Function Type
     Refer: https://golang.org/src/reflect/type.go
 
@@ -484,6 +485,7 @@ class FuncType(RType):
 
 class InterfaceType(RType):
     '''
+    go 1.18.1
     Interface type   
     Refer: https://golang.org/src/reflect/type.go
 
@@ -514,6 +516,7 @@ class InterfaceType(RType):
 
 class Imethod():
     '''
+    go 1.18.1
     IMethod type    
     Refer: https://golang.org/src/reflect/type.go
 
@@ -535,6 +538,7 @@ class Imethod():
 
 class MapType(RType):
     '''
+    go 1.18.1
     Map type
     Refer: https://golang.org/src/reflect/type.go
 
@@ -573,7 +577,7 @@ class MapType(RType):
         
 class ChanType(RType):
     '''
-    go 1.16.8
+    go 1.18.1
     Channel type    
     Refer: https://golang.org/src/reflect/type.go
 
@@ -615,7 +619,7 @@ class ChanType(RType):
 
 class UncommonType():
     '''
-    go 1.16.8
+    go 1.18.1
     Uncommon type
     Refer: https://golang.org/src/reflect/type.go
 
@@ -659,7 +663,7 @@ class UncommonType():
 
 class Uncommon_Method():
     '''
-    go 1.16.8
+    go 1.18.1
     Method type of no-interface type
     Refer: https://golang.org/src/reflect/type.go
 

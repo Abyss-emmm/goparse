@@ -11,7 +11,7 @@ class ItabLinks():
         self.moduledata = moduledata
         ptrSize = moduledata.pcHeader.ptrSize
         self.itablinks_slice = common.slice.parse(start_addr,ptrSize)
-        self.parsed_itabs = []
+        self.parsed_itabs = {}
 
         for i in range(0,self.itablinks_slice.len):
             itab_addr = common.get_qword(self.itablinks_slice.addr+i*ptrSize)
@@ -20,7 +20,7 @@ class ItabLinks():
     
     def parse_itab(self,itab_addr):
         itab = Itab(itab_addr,self)
-        self.parsed_itabs.append(itab)
+        self.parsed_itabs[itab_addr] = itab
 
 
 class Itab():

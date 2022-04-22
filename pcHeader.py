@@ -51,14 +51,18 @@ class pcHeader():
             self.funcs = {}
             for i in range(0,self.nfunc):
                 _func = func.functab(self.pclntab_addr+i*2*self.ptrSize,self)
-                self.pclntab.append(func)
-                func_info = "args size:0x%x bytes\nfilename:%s\nfileno:%d" % (_func.funcinfo.args,_func.funcinfo.filename,_func.funcinfo.line)
+                self.pclntab.append(_func)
+                func_info = "funcname:%s\ninput and output args size:0x%x bytes\nfilename:%s\nfileno:%d" % (_func.funcinfo.funcname.decode('utf-8'),_func.funcinfo.args,_func.funcinfo.filename,_func.funcinfo.line)
                 self.funcs[_func.entry] = func_info
     
     def is_valid(pcheader_addr,moduledata_addr):
         pcheader = pcHeader(pcheader_addr,moduledata_addr,False)
         firstmoduledata = moduledata.ModuleData(moduledata_addr,False)
-        if firstmoduledata.funcname.addr == pcheader.funcname_addr and firstmoduledata.cutab.addr == pcheader.cutab and firstmoduledata.funcname.addr == pcheader.funcname_addr and firstmoduledata.filetab.addr == pcheader.filetab and firstmoduledata.pctab.addr == pcheader.pctab and firstmoduledata.pclntable.addr == pcheader.pclntab_addr:
+        if firstmoduledata.funcname.addr == pcheader.funcname_addr and \
+            firstmoduledata.cutab.addr == pcheader.cutab and \
+            firstmoduledata.filetab.addr == pcheader.filetab and \
+            firstmoduledata.pctab.addr == pcheader.pctab and \
+            firstmoduledata.pclntable.addr == pcheader.pclntab_addr:
             return True
         return False
 

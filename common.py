@@ -11,8 +11,8 @@ import ida_xref
 # ADDR_SZ = 4 # Default: 32-bit
 # if idaapi.get_inf_structure().is_64bit():
 #     ADDR_SZ = 8
-
-pcheader_MAGIC = 0xFFFFFFFA
+# go 1.18.1
+pcheader_MAGIC = 0xFFFFFFF0
 
 
 def b2bin_search_str(magic_int):
@@ -75,17 +75,18 @@ def zig_zag_encode64(val):
 def read_varint(addr):
     val = 0
     shitf = 0
+    length = 0
     while True:
-        tmp = ida_bytes.get_byte(addr)
-        addr += 1
+        tmp = ida_bytes.get_byte(addr+length)
+        length += 1
         val |= (tmp&0x7f) << (shitf & 31)
         if tmp & 0x80 ==0:
             break
         shitf += 7
-    return val
+    return val,length
 
 def read_pcvalue(addr):
-    val = read_varint(addr)
+    val,length = read_varint(addr)
     val = zig_zag_decode(val)
     val += -1
     return val
@@ -100,7 +101,7 @@ class slice():
         return ("addr:0x%x len:0x%x cap:0x%x" % (self.addr,self.len,self.cap))
 
 
-    def parse(start_addr,ptrsize,create:bool=True):
+    def parse(start_addr,create:bool=True,ptrsize=8):
         '''
         增加create参数主要是为了ModuleData和pcHeader的初始函数中的parse参数
         如果parse参数为False，那么仅读取数据进行判断，而不修改数据类型
@@ -120,7 +121,7 @@ class String():
         self.addr = addr
         self.len = length
 
-    def parse(start_addr,ptrsize,create:bool=True):
+    def parse(start_addr,create:bool=True,ptrsize=8):
         addr = ida_bytes.get_qword(start_addr)
         length = ida_bytes.get_qword(start_addr+ptrsize)
         if create:
